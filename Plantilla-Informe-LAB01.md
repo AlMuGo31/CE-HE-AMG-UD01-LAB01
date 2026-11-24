@@ -108,10 +108,14 @@ que va a pasar. Si no sabéis escribirlo, preguntad a la IA qué hace el comando
 
 | Comando | Qué esperamos | Qué ha salido | Captura |
 |---|---|---|---|
-| [ ] | [ ] | [ ] | [n.º] |
+| [ shell ] | [ Que abra la terminal del sistema operativo ] | [ Abrir la terminal ] | [n.º11] |
+| [ id ] | [ Esperamos que nos salgan losi permisos de DC-1 ] | [ Nos ha salido que el UID es 33, el GID que es el grupo principal es 23 y groups es igual a 33 significa que no pertenece a otros grupos ] | [nº12] |
+| [ find / -pern -4000 -type f 2>/dev/null ] | [ Esperamos buscar en todo el sistema archivos que tengan activado el permiso SUID (Son programas que utilizan temporalmente los permisos de otro usario) ] | [ Ha mostrado 19 archivos ejecutables que tienen activado el permiso SUID en la maquina DC-1 ] | [nº13] |
+| [ ls -l /usr/bin/find ] | [ Si find tiene el permiso SUID y pertenece a root ] | [ Una posible escalada de privilegios ] | [nº14] |
+| [ /usr/bin/find . -exec /bin/bash -p \; -quit ] | [ Esperamos hacer escala de privilegios ] | [ Al utilizar el comando hemos puestoe comando de "whoami" y nos sale que somos root ] | [nº15] | 
 
-**¿Qué fallo de configuración nos ha permitido escalar?** [ ]
-**Usuario final:** [ ]
+**¿Qué fallo de configuración nos ha permitido escalar?** [ Asignacion incorrecta de permiso al SUID al ejecutable /usr/bin/find. Este ejecutable pertenece al usuario root y tiene activado el bit SUID, esto provoca que cuando un usuario sin privilegios como www-data ejecuta find, el programa se ejecute con los privilegios efectivos de usuario root ]
+**Usuario final:** [ root ]
 
 > Si no llegáis a esta fase, escribid hasta dónde habéis llegado y qué probaríais después. Se
 > valora lo que sabéis explicar, no llegar a root.
@@ -124,8 +128,7 @@ Un hallazgo es **un fallo del servidor**, no lo que habéis hecho vosotros. Una 
 
 | Fallo encontrado | Por qué existe (causa) | Gravedad | Cómo corregirlo | Cómo detectar el ataque |
 |---|---|---|---|---|
-| [ ] | [ ] | [Crítica / Alta / Media / Baja] | [ ] | [ ] |
-| [ ] | [ ] | [ ] | [ ] | [ ] |
+| [ Se ha detectado que el ejecutable /usr/bin/find tiene activado  el permiso SUID y pertenece al usuario root. Esta configuración  permite que cualquier usuario con acceso al sistema ejecute este programa con los privilegios efectivos de su propietarios. Mediante la opción -exec de find, conseguimos iniciar una shell de Bash conservando dichos privilegios y obtener euid=0(root) desde nuestra sesión inicial como www-data ] | [ Asignaciñon del permiso SIUD a un ejecutable que permite ejecutar comandos externos, sin que exista una necesidad justificada para mantener dicho permiso ] | [Crítica] | [ Se puede corregir mediante el comando chmod u-s /usr/bin/find ] | [ Monitorizar la ejecucion de find. Detectar la ejecución de shells. Auditar los permisos SUID. Revisar los registros del sistema ] |
 
 > **Ejemplo:**
 >
@@ -143,17 +146,8 @@ Cada integrante añade al menos una fila con su bitácora.
 
 | Quién | Qué preguntamos | Qué aprendimos | ¿La IA se equivocó? ¿Cómo lo comprobamos? |
 |---|---|---|---|
-| [ ] | [ ] | [ ] | [ ] |
-| [ ] | [ ] | [ ] | [ ] |
-| [ ] | [ ] | [ ] | [ ] |
+| [ Álvaro ] | [ Cómo realizar el reconocimiento de la máquina DC-1 e interpretar los resultados del escaneo de puertos y servicios ] | [ Aprendimos a identificar los servicios activos, interpretar sus versiones y localizar posibles puntos de entrada. ] | [ Comprobamos las indicaciones ejecutando los comandos en Kali Linux y contrastando los resultados obtenidos con las respuestas de la IA. ] |
+| [ Alejandro ] | [ Cómo identificar y explotar la vulnerabilidad Drupalgeddon2 mediante Metasploit ] | [ Aprendimos cómo aprovechar una vulnerabilidad de Drupal 7 para obtener acceso inicial al sistema como www-data ] | [ Algunas indicaciones necesitaron ajustes durante la ejecución. Comprobamos el acceso mediante la sesión de Meterpreter y el comando getuid. ] |
+| [ Raúl ] | [ Qué es el permiso SUID, cómo identificar archivos que lo utilizan y cómo aprovechar una configuración insegura para escalar privilegios. ] | [ Aprendimos que un ejecutable propiedad de root con SUID puede permitir una escalada de privilegios. Conseguimos obtener euid=0(root) mediante /usr/bin/find. ] | [ La primera indicación para ejecutar la shell con /bin/sh -p falló porque esa shell no reconocía la opción. Lo comprobamos sustituyéndola por /bin/bash -p y verificando el resultado con id. ] |
 
 ---
-
-## Antes de entregar
-
-- [ ] Las cuatro fases tienen al menos un comando con lo que esperábamos, lo que salió y una captura.
-- [ ] Cada fallo tiene causa, gravedad, corrección y detección.
-- [ ] Está escrito el resumen del apartado 1.
-- [ ] Cada integrante ha rellenado su fila de IA.
-- [ ] Los tres sabemos explicar por qué hicimos cada paso (la defensa se sortea).
-- [ ] Las capturas van adjuntas y numeradas.
